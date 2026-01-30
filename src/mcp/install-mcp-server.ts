@@ -1,6 +1,6 @@
 import * as core from "@actions/core";
 import { GITHUB_API_URL, GITHUB_SERVER_URL } from "../github/api/config";
-import type { GitHubContext } from "../github/context";
+import type { GitHubContext, ParsedGitHubContext } from "../github/context";
 import { isEntityContext } from "../github/context";
 import { Octokit } from "@octokit/rest";
 import type { AutoDetectedMode } from "../modes/detector";
@@ -15,6 +15,7 @@ type PrepareConfigParams = {
   allowedTools: string[];
   mode: AutoDetectedMode;
   context: GitHubContext;
+  discussionNodeId?: string;
 };
 
 async function checkActionsReadPermission(
@@ -83,6 +84,10 @@ export async function prepareMcpConfig(
 
     const hasGitHubCITools = allowedToolsList.some((tool) =>
       tool.startsWith("mcp__github_ci__"),
+    );
+
+    const hasDiscussionTools = allowedToolsList.some((tool) =>
+      tool.startsWith("mcp__github_discussion__"),
     );
 
     const baseMcpConfig: { mcpServers: Record<string, unknown> } = {
@@ -214,6 +219,32 @@ export async function prepareMcpConfig(
         env: {
           GITHUB_PERSONAL_ACCESS_TOKEN: githubToken,
           GITHUB_HOST: GITHUB_SERVER_URL,
+        },
+      };
+    }
+
+    // Include discussion server for discussion events
+    // - Always in tag mode for discussions (for posting replies)
+    // - Only with explicit tools in agent mode
+    const isDiscussionEvent =
+      isEntityContext(context) &&
+      (context as ParsedGitHubContext).isDiscussion === true;
+    const shouldIncludeDiscussionServer =
+      isDiscussionEvent && (!isAgentMode || hasDiscussionTools);
+
+    if (shouldIncludeDiscussionServer && params.discussionNodeId) {
+      baseMcpConfig.mcpServers.github_discussion = {
+        command: "bun",
+        args: [
+          "run",
+          `${process.env.GITHUB_ACTION_PATH}/src/mcp/github-discussion-server.ts`,
+        ],
+        env: {
+          GITHUB_TOKEN: githubToken,
+          REPO_OWNER: owner,
+          REPO_NAME: repo,
+          DISCUSSION_NODE_ID: params.discussionNodeId,
+          GITHUB_API_URL: GITHUB_API_URL,
         },
       };
     }

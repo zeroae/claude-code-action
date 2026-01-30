@@ -15,10 +15,164 @@ import {
   extractOriginalTitle,
 } from "../../github/data/fetcher";
 import { createPrompt, generateDefaultPrompt } from "../../create-prompt";
-import { isEntityContext } from "../../github/context";
+import {
+  isEntityContext,
+  isDiscussionEvent,
+  isDiscussionCommentEvent,
+  type ParsedGitHubContext,
+} from "../../github/context";
 import type { PreparedContext } from "../../create-prompt/types";
 import type { FetchDataResult } from "../../github/data/fetcher";
 import { parseAllowedTools } from "../agent/parse-tools";
+import { buildDiscussionContext } from "../../github/data/discussion-fetcher";
+import {
+  buildDiscussionPrompt,
+  type DiscussionPromptContext,
+} from "../../create-prompt/discussion-prompt";
+import type { DiscussionCommentEvent } from "@octokit/webhooks-types";
+
+/**
+ * Handles preparation for discussion events.
+ * Discussions are conversational and don't require branch setup.
+ */
+async function prepareDiscussion({
+  context,
+  octokit,
+  githubToken,
+}: ModeOptions): Promise<ModeResult> {
+  if (!isEntityContext(context)) {
+    throw new Error("Discussion mode requires entity context");
+  }
+
+  const parsedContext = context as ParsedGitHubContext;
+
+  // Check if actor is human
+  await checkHumanActor(octokit.rest, context);
+
+  // Get the trigger comment ID from the payload
+  let triggerCommentId: string | undefined;
+  if (isDiscussionCommentEvent(context)) {
+    const payload = context.payload as DiscussionCommentEvent;
+    triggerCommentId = payload.comment.node_id;
+  }
+
+  // Fetch discussion context
+  const discussionContext = await buildDiscussionContext(
+    octokit,
+    context.repository.owner,
+    context.repository.repo,
+    context.entityNumber,
+    triggerCommentId || parsedContext.discussionNodeId || "",
+    context.inputs.botName,
+  );
+
+  if (!discussionContext) {
+    throw new Error("Failed to fetch discussion data");
+  }
+
+  // Build discussion prompt context
+  const { discussion, replyChain } = discussionContext;
+  const triggerComment = triggerCommentId
+    ? replyChain.find((c) => c.id === triggerCommentId)
+    : undefined;
+
+  const promptContext: DiscussionPromptContext = {
+    discussion: {
+      id: discussion.id,
+      number: discussion.number,
+      title: discussion.title,
+      body: discussion.body || "",
+      author: discussion.author,
+      category: discussion.category,
+      createdAt: discussion.createdAt,
+    },
+    triggerComment: triggerComment
+      ? {
+          id: triggerComment.id,
+          body: triggerComment.body,
+          author: triggerComment.author,
+        }
+      : {
+          id: discussion.id,
+          body: discussion.body || "",
+          author: discussion.author,
+        },
+    replyChain: replyChain.map((c) => ({
+      id: c.id,
+      body: c.body,
+      author: c.author,
+    })),
+    repository: `${context.repository.owner}/${context.repository.repo}`,
+    botLogin: context.inputs.botName,
+  };
+
+  // Generate discussion-specific prompt
+  const prompt = buildDiscussionPrompt(promptContext);
+
+  // Write prompt to file
+  const promptFile =
+    process.env.PROMPT_FILE || "/tmp/claude-prompt-discussion.txt";
+  await Bun.write(promptFile, prompt);
+  core.setOutput("prompt_file", promptFile);
+
+  const userClaudeArgs = process.env.CLAUDE_ARGS || "";
+  const userAllowedMCPTools = parseAllowedTools(userClaudeArgs).filter(
+    (tool) => tool.startsWith("mcp__github_"),
+  );
+
+  // Discussion mode tools - focused on reading and replying
+  const discussionTools = [
+    "Glob",
+    "Grep",
+    "LS",
+    "Read",
+    "mcp__github_discussion__reply_to_discussion",
+    "mcp__github_discussion__update_discussion_comment",
+    ...userAllowedMCPTools,
+  ];
+
+  // Discussions use the default branch, no special branch setup needed
+  const defaultBranch =
+    process.env.GITHUB_BASE_REF || process.env.GITHUB_REF_NAME || "main";
+
+  // Get our GitHub MCP servers configuration
+  const ourMcpConfig = await prepareMcpConfig({
+    githubToken,
+    owner: context.repository.owner,
+    repo: context.repository.repo,
+    branch: defaultBranch,
+    baseBranch: defaultBranch,
+    allowedTools: Array.from(new Set(discussionTools)),
+    mode: "tag",
+    context,
+    discussionNodeId: parsedContext.discussionNodeId,
+  });
+
+  // Build complete claude_args
+  let claudeArgs = "";
+
+  // Add our GitHub servers config
+  const escapedOurConfig = ourMcpConfig.replace(/'/g, "'\\''");
+  claudeArgs = `--mcp-config '${escapedOurConfig}'`;
+
+  // Add required tools for discussion mode
+  claudeArgs += ` --allowedTools "${discussionTools.join(",")}"`;
+
+  // Append user's claude_args
+  if (userClaudeArgs) {
+    claudeArgs += ` ${userClaudeArgs}`;
+  }
+
+  core.setOutput("claude_args", claudeArgs.trim());
+
+  return {
+    branchInfo: {
+      baseBranch: defaultBranch,
+      currentBranch: defaultBranch,
+    },
+    mcpConfig: ourMcpConfig,
+  };
+}
 
 /**
  * Tag mode implementation.
@@ -71,6 +225,15 @@ export const tagMode: Mode = {
       throw new Error("Tag mode requires entity context");
     }
 
+    // Check if this is a discussion event
+    const isDiscussion =
+      isDiscussionEvent(context) || isDiscussionCommentEvent(context);
+
+    if (isDiscussion) {
+      return prepareDiscussion({ context, octokit, githubToken });
+    }
+
+    // Standard PR/Issue flow follows
     // Check if actor is human
     await checkHumanActor(octokit.rest, context);
 
