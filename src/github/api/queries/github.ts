@@ -137,3 +137,60 @@ export const USER_QUERY = `
     }
   }
 `;
+
+export const DISCUSSION_QUERY = `
+  query($owner: String!, $repo: String!, $number: Int!) {
+    repository(owner: $owner, name: $repo) {
+      discussion(number: $number) {
+        id
+        number
+        title
+        body
+        author {
+          login
+        }
+        category {
+          id
+          name
+          slug
+        }
+        createdAt
+        updatedAt
+        comments(first: 100) {
+          nodes {
+            id
+            databaseId
+            body
+            author {
+              login
+            }
+            createdAt
+            updatedAt
+            isMinimized
+            replyTo {
+              id
+              databaseId
+            }
+            replies(first: 100) {
+              nodes {
+                id
+                databaseId
+                body
+                author {
+                  login
+                }
+                createdAt
+                updatedAt
+                isMinimized
+                replyTo {
+                  id
+                  databaseId
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+`;
