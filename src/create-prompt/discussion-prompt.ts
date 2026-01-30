@@ -72,11 +72,12 @@ Previous session summary: ${sessionSummary}
   prompt += `
 You are responding to the <current_request> above. This is a conversational GitHub Discussion - be helpful and engaging.
 
-Use the mcp__github_discussion__reply_to_discussion tool to post your response.
+Use the mcp__github_discussion__reply_to_discussion tool to post your response. You only need to provide the "body" parameter - the discussion ID is already configured.
 
 Key points:
 - This is an exploratory discussion, not a task to execute
 - Feel free to ask clarifying questions
+- Use WebSearch if you need to research external topics
 - Reference specific code or docs when helpful
 - Keep responses focused and actionable
 `;

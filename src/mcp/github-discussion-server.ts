@@ -58,10 +58,15 @@ const UPDATE_DISCUSSION_COMMENT_MUTATION = `
 
 server.tool(
   "reply_to_discussion",
-  "Reply to a discussion or a specific comment in a discussion",
+  "Reply to a discussion or a specific comment in a discussion. Uses the current discussion by default.",
   {
     body: z.string().describe("The reply content"),
-    discussion_id: z.string().describe("The GraphQL node ID of the discussion"),
+    discussion_id: z
+      .string()
+      .optional()
+      .describe(
+        "The GraphQL node ID of the discussion (defaults to current discussion)",
+      ),
     reply_to_id: z
       .string()
       .optional()
@@ -70,11 +75,19 @@ server.tool(
       ),
   },
   async ({ body, discussion_id, reply_to_id }) => {
+    // Use environment variable as default for discussion_id
+    const targetDiscussionId = discussion_id || process.env.DISCUSSION_NODE_ID;
     try {
       const githubToken = process.env.GITHUB_TOKEN;
 
       if (!githubToken) {
         throw new Error("GITHUB_TOKEN environment variable is required");
+      }
+
+      if (!targetDiscussionId) {
+        throw new Error(
+          "discussion_id is required (either as parameter or DISCUSSION_NODE_ID env var)",
+        );
       }
 
       const response = await fetch(`${GITHUB_API_URL}/graphql`, {
@@ -86,7 +99,7 @@ server.tool(
         body: JSON.stringify({
           query: ADD_DISCUSSION_COMMENT_MUTATION,
           variables: {
-            discussionId: discussion_id,
+            discussionId: targetDiscussionId,
             body,
             replyToId: reply_to_id || null,
           },
