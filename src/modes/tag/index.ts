@@ -1,4 +1,5 @@
 import * as core from "@actions/core";
+import { mkdir } from "fs/promises";
 import type { Mode, ModeOptions, ModeResult } from "../types";
 import { checkContainsTrigger } from "../../github/validation/trigger";
 import { checkHumanActor } from "../../github/validation/actor";
@@ -109,9 +110,10 @@ async function prepareDiscussion({
   // Generate discussion-specific prompt
   const prompt = buildDiscussionPrompt(promptContext);
 
-  // Write prompt to file
-  const promptFile =
-    process.env.PROMPT_FILE || "/tmp/claude-prompt-discussion.txt";
+  // Write prompt to file (same location as standard prepare)
+  const promptsDir = `${process.env.RUNNER_TEMP || "/tmp"}/claude-prompts`;
+  await mkdir(promptsDir, { recursive: true });
+  const promptFile = `${promptsDir}/claude-prompt.txt`;
   await Bun.write(promptFile, prompt);
   core.setOutput("prompt_file", promptFile);
 
