@@ -13,21 +13,27 @@ describe("Title Suggestion", () => {
   });
 
   it("does not suggest for specific titles", () => {
-    expect(shouldSuggestTitle("How to implement JWT authentication?")).toBe(false);
-    expect(shouldSuggestTitle("Best practices for error handling in React")).toBe(false);
+    expect(shouldSuggestTitle("How to implement JWT authentication?")).toBe(
+      false,
+    );
+    expect(
+      shouldSuggestTitle("Best practices for error handling in React"),
+    ).toBe(false);
   });
 
   it("generates title from discussion content", () => {
     const title = generateTitleSuggestion(
       "I'm trying to implement authentication in my app. Should I use JWT or session-based auth?",
-      "Decided to use JWT with RS256 algorithm and 15-minute expiry."
+      "Decided to use JWT with RS256 algorithm and 15-minute expiry.",
     );
     expect(title).toBeTruthy();
     expect(title.length).toBeLessThan(100);
   });
 
   it("formats title suggestion as markdown", () => {
-    const formatted = formatTitleSuggestion("JWT Authentication Implementation");
+    const formatted = formatTitleSuggestion(
+      "JWT Authentication Implementation",
+    );
     expect(formatted).toContain("💡");
     expect(formatted).toContain("JWT Authentication Implementation");
   });
@@ -35,7 +41,7 @@ describe("Title Suggestion", () => {
   it("handles empty summary gracefully", () => {
     const title = generateTitleSuggestion(
       "How do I configure webpack for production builds?",
-      undefined
+      undefined,
     );
     expect(title).toBeTruthy();
   });

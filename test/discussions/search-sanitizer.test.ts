@@ -13,7 +13,8 @@ describe("Search Sanitizer", () => {
   });
 
   it("removes Bearer tokens", () => {
-    const query = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.abc authentication";
+    const query =
+      "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.abc authentication";
     const sanitized = sanitizeSearchQuery(query);
     expect(sanitized).not.toContain("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9");
   });
@@ -27,7 +28,9 @@ describe("Search Sanitizer", () => {
   it("detects credential patterns", () => {
     expect(containsCredentialPatterns("normal search query")).toBe(false);
     expect(containsCredentialPatterns("sk-1234567890abcdef1234")).toBe(true);
-    expect(containsCredentialPatterns("ghp_abcdef1234567890abcdef1234567890abcd")).toBe(true);
+    expect(
+      containsCredentialPatterns("ghp_abcdef1234567890abcdef1234567890abcd"),
+    ).toBe(true);
     expect(containsCredentialPatterns("password=secret123")).toBe(true);
   });
 

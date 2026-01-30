@@ -31,9 +31,7 @@ export function resolveCapabilities(
   const { categoryName, config, labels } = context;
 
   // Find category config
-  const categoryConfig = config.categories.find(
-    (c) => c.name === categoryName,
-  );
+  const categoryConfig = config.categories.find((c) => c.name === categoryName);
 
   if (!categoryConfig) {
     // Unknown category - use restrictive defaults
