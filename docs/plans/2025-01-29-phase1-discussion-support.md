@@ -13,6 +13,7 @@
 ## Task 1: Add Discussion Event Types to Context
 
 **Files:**
+
 - Modify: `src/github/context.ts`
 - Create: `test/discussion-context.test.ts`
 
@@ -208,6 +209,7 @@ git commit -m "feat: add discussion and discussion_comment event types"
 ## Task 2: Add Discussion Configuration Parser
 
 **Files:**
+
 - Create: `src/config/discussion-config.ts`
 - Create: `test/discussion-config.test.ts`
 
@@ -375,6 +377,7 @@ git commit -m "feat: add discussion configuration parser"
 ## Task 3: Add Discussion GraphQL Query
 
 **Files:**
+
 - Modify: `src/github/api/queries/github.ts`
 - Create: `test/discussion-query.test.ts`
 
@@ -492,6 +495,7 @@ git commit -m "feat: add GraphQL query for discussions"
 ## Task 4: Add Discussion Types
 
 **Files:**
+
 - Modify: `src/github/types.ts`
 
 **Step 1: Read existing types file**
@@ -563,6 +567,7 @@ git commit -m "feat: add discussion type definitions"
 ## Task 5: Create Discussion Comment MCP Server
 
 **Files:**
+
 - Create: `src/mcp/github-discussion-server.ts`
 - Create: `test/github-discussion-server.test.ts`
 
@@ -576,9 +581,7 @@ import { existsSync } from "fs";
 
 describe("GitHub Discussion Server", () => {
   it("server file exists", () => {
-    expect(
-      existsSync("src/mcp/github-discussion-server.ts"),
-    ).toBe(true);
+    expect(existsSync("src/mcp/github-discussion-server.ts")).toBe(true);
   });
 });
 ```
@@ -660,7 +663,9 @@ server.tool(
     reply_to_id: z
       .string()
       .optional()
-      .describe("Optional: GraphQL node ID of comment to reply to (for threading)"),
+      .describe(
+        "Optional: GraphQL node ID of comment to reply to (for threading)",
+      ),
   },
   async ({ body, discussion_id, reply_to_id }) => {
     try {
@@ -696,7 +701,11 @@ server.tool(
         content: [
           {
             type: "text",
-            text: JSON.stringify(result.data.addDiscussionComment.comment, null, 2),
+            text: JSON.stringify(
+              result.data.addDiscussionComment.comment,
+              null,
+              2,
+            ),
           },
         ],
       };
@@ -721,7 +730,9 @@ server.tool(
   "update_discussion_comment",
   "Update an existing discussion comment",
   {
-    comment_id: z.string().describe("The GraphQL node ID of the comment to update"),
+    comment_id: z
+      .string()
+      .describe("The GraphQL node ID of the comment to update"),
     body: z.string().describe("The updated comment content"),
   },
   async ({ comment_id, body }) => {
@@ -757,7 +768,11 @@ server.tool(
         content: [
           {
             type: "text",
-            text: JSON.stringify(result.data.updateDiscussionComment.comment, null, 2),
+            text: JSON.stringify(
+              result.data.updateDiscussionComment.comment,
+              null,
+              2,
+            ),
           },
         ],
       };
@@ -807,6 +822,7 @@ git commit -m "feat: add MCP server for discussion replies"
 ## Task 6: Add Discussion Mode Detection
 
 **Files:**
+
 - Modify: `src/modes/detector.ts`
 - Modify: `test/modes/detector.test.ts`
 
@@ -868,21 +884,24 @@ import {
 Add discussion handling in `detectMode()` function, before the default return:
 
 ```typescript
-  // Discussion events
-  if (isEntityContext(context) && (isDiscussionEvent(context) || isDiscussionCommentEvent(context))) {
-    // For discussions, use tag mode if in a Claude category or has trigger phrase
-    // Category checking will be done in the prepare step
-    if (context.inputs.prompt) {
-      return "agent";
-    }
-    if (checkContainsTrigger(context)) {
-      return "tag";
-    }
-    // For new discussions in Claude categories, default to tag mode
-    if (isDiscussionEvent(context)) {
-      return "tag";
-    }
+// Discussion events
+if (
+  isEntityContext(context) &&
+  (isDiscussionEvent(context) || isDiscussionCommentEvent(context))
+) {
+  // For discussions, use tag mode if in a Claude category or has trigger phrase
+  // Category checking will be done in the prepare step
+  if (context.inputs.prompt) {
+    return "agent";
   }
+  if (checkContainsTrigger(context)) {
+    return "tag";
+  }
+  // For new discussions in Claude categories, default to tag mode
+  if (isDiscussionEvent(context)) {
+    return "tag";
+  }
+}
 ```
 
 Update `validateTrackProgressEvent` to include discussion events:
@@ -917,6 +936,7 @@ git commit -m "feat: add discussion mode detection"
 ## Task 7: Create Session Storage Utilities
 
 **Files:**
+
 - Create: `src/sessions/storage.ts`
 - Create: `test/sessions/storage.test.ts`
 
@@ -1069,6 +1089,7 @@ git commit -m "feat: add session storage utilities"
 ## Task 8: Update action.yml for Discussion Events
 
 **Files:**
+
 - Modify: `action.yml`
 
 **Step 1: Add discussion_categories input**
@@ -1076,10 +1097,10 @@ git commit -m "feat: add session storage utilities"
 Add to `action.yml` in the inputs section (after `label_trigger`):
 
 ```yaml
-  discussion_categories_file:
-    description: "Path to discussion categories config file (default: .github/claude-discussions.yml)"
-    required: false
-    default: ".github/claude-discussions.yml"
+discussion_categories_file:
+  description: "Path to discussion categories config file (default: .github/claude-discussions.yml)"
+  required: false
+  default: ".github/claude-discussions.yml"
 ```
 
 **Step 2: Commit**
@@ -1134,6 +1155,7 @@ Visit: https://github.com/zeroae/claude-code-action
 ## Summary
 
 Phase 1 adds:
+
 1. Discussion event type support in context parsing
 2. Configuration file parser for discussion categories
 3. GraphQL query for fetching discussion data

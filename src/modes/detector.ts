@@ -81,7 +81,10 @@ export function detectMode(context: GitHubContext): AutoDetectedMode {
   }
 
   // Discussion events
-  if (isEntityContext(context) && (isDiscussionEvent(context) || isDiscussionCommentEvent(context))) {
+  if (
+    isEntityContext(context) &&
+    (isDiscussionEvent(context) || isDiscussionCommentEvent(context))
+  ) {
     // For discussions, use tag mode if in a Claude category or has trigger phrase
     // Category checking will be done in the prepare step
     if (context.inputs.prompt) {

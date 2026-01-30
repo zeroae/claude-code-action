@@ -22,6 +22,7 @@ Currently, Claude Code sessions are ephemeral and local. Valuable conversations 
 ### Discussions as Session Trees
 
 Each Discussion becomes a conversation tree where:
+
 - Each Claude response is a potential branch point
 - Users can reply to any Claude comment to fork the conversation
 - Users can "rewind" by replying to older comments
@@ -46,6 +47,7 @@ Discussion #42
 ### Claude Zones
 
 Specific Discussion categories are designated as "Claude zones" where:
+
 - New discussions get immediate Claude responses
 - Any reply triggers Claude (no `@claude` mention needed)
 - Each category can have different capability levels
@@ -53,6 +55,7 @@ Specific Discussion categories are designated as "Claude zones" where:
 ### Exploratory by Default
 
 Discussions are for thinking, not executing:
+
 - Read/explore code: Always enabled
 - Web search: Enabled with credential protection
 - Edit files locally: Enabled for prototyping
@@ -68,7 +71,7 @@ Discussions are for thinking, not executing:
 Configuration in `.github/claude-discussions.yml`:
 
 ```yaml
-session_branch: claude-sessions  # orphan branch for session storage
+session_branch: claude-sessions # orphan branch for session storage
 
 categories:
   - name: "Claude Q&A"
@@ -87,15 +90,15 @@ categories:
     capabilities:
       web_search: true
       edit_files: true
-      can_commit: true  # Full access for trusted space
+      can_commit: true # Full access for trusted space
 ```
 
 #### Event Handling
 
-| Event | Trigger Condition | Action |
-|-------|-------------------|--------|
-| `discussion.created` | Category in config | Claude responds to opening post |
-| `discussion_comment.created` | Category in config OR `@claude` mention | Claude responds in thread |
+| Event                        | Trigger Condition                       | Action                          |
+| ---------------------------- | --------------------------------------- | ------------------------------- |
+| `discussion.created`         | Category in config                      | Claude responds to opening post |
+| `discussion_comment.created` | Category in config OR `@claude` mention | Claude responds in thread       |
 
 #### Fallback Behavior
 
@@ -107,6 +110,7 @@ categories:
 #### Threaded Replies
 
 Claude posts new comments as threaded replies to the triggering comment:
+
 - Preserves conversation structure
 - Enables natural branching
 - Each response is a potential fork point
@@ -114,6 +118,7 @@ Claude posts new comments as threaded replies to the triggering comment:
 #### Smart Quoting
 
 Claude quotes the triggering message only when:
+
 - Thread is long (>5 messages in chain)
 - Context might be ambiguous
 - Otherwise, threading provides sufficient context
@@ -121,6 +126,7 @@ Claude quotes the triggering message only when:
 #### Title Suggestions
 
 For new discussions, Claude may suggest a better title:
+
 - Analyzes the content
 - Proposes descriptive title
 - Can auto-update if permitted
@@ -147,7 +153,7 @@ Per-comment session file (minimal, since Claude session has full history):
 ```yaml
 # DC_abc123.yaml
 comment_id: DC_abc123
-parent_comment_id: null  # null for root, or parent DC_* for threading
+parent_comment_id: null # null for root, or parent DC_* for threading
 session_id: sess_abc123xyz
 created_at: 2025-01-29T10:30:00Z
 updated_at: 2025-01-29T10:35:00Z
@@ -188,18 +194,19 @@ When Claude receives a trigger:
 
 #### Default Capabilities
 
-| Capability | Discussions | Issues/PRs |
-|------------|-------------|------------|
-| Answer questions | ✅ | ✅ |
-| Read/explore code | ✅ | ✅ |
-| Web search | ✅ (sanitized) | ❌ |
-| Edit files (local) | ✅ | ✅ |
-| Commit & push | Gated | ✅ |
-| Create Issue/PR | Via skill | N/A |
+| Capability         | Discussions    | Issues/PRs |
+| ------------------ | -------------- | ---------- |
+| Answer questions   | ✅             | ✅         |
+| Read/explore code  | ✅             | ✅         |
+| Web search         | ✅ (sanitized) | ❌         |
+| Edit files (local) | ✅             | ✅         |
+| Commit & push      | Gated          | ✅         |
+| Create Issue/PR    | Via skill      | N/A        |
 
 #### Web Search Protection
 
 To prevent credential leakage:
+
 - Sanitize queries: Strip patterns matching secrets/tokens before searching
 - Sanitize stored context: Don't persist search results to session files
 - Allowlist approach: Consider limiting to known-safe domains
@@ -207,6 +214,7 @@ To prevent credential leakage:
 #### Commit Gating
 
 Commits disabled by default in discussions. Can be enabled via:
+
 - Category config: `can_commit: true`
 - Label trigger: Add `claude-can-commit` label to discussion
 
@@ -215,6 +223,7 @@ Commits disabled by default in discussions. Can be enabled via:
 #### Skills
 
 Two new skills for graduating discussions to actionable items:
+
 - `/create-issue` - Create a GitHub Issue from discussion
 - `/create-pr` - Create a Pull Request from discussion
 
@@ -243,6 +252,7 @@ Based on our discussion, we've decided to implement JWT authentication:
 Resolves discussion #42.
 
 ---
+
 💬 Reply to refine this draft, or say "create it" to publish.
 ```
 
@@ -285,9 +295,9 @@ on:
 
 ```yaml
 permissions:
-  contents: write      # For session storage branch
-  discussions: write   # For posting replies
-  issues: write        # For /create-issue skill
+  contents: write # For session storage branch
+  discussions: write # For posting replies
+  issues: write # For /create-issue skill
   pull-requests: write # For /create-pr skill
 ```
 

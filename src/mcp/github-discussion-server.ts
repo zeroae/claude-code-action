@@ -65,7 +65,9 @@ server.tool(
     reply_to_id: z
       .string()
       .optional()
-      .describe("Optional: GraphQL node ID of comment to reply to (for threading)"),
+      .describe(
+        "Optional: GraphQL node ID of comment to reply to (for threading)",
+      ),
   },
   async ({ body, discussion_id, reply_to_id }) => {
     try {
@@ -101,7 +103,11 @@ server.tool(
         content: [
           {
             type: "text" as const,
-            text: JSON.stringify(result.data.addDiscussionComment.comment, null, 2),
+            text: JSON.stringify(
+              result.data.addDiscussionComment.comment,
+              null,
+              2,
+            ),
           },
         ],
       };
@@ -125,7 +131,9 @@ server.tool(
   "update_discussion_comment",
   "Update an existing discussion comment",
   {
-    comment_id: z.string().describe("The GraphQL node ID of the comment to update"),
+    comment_id: z
+      .string()
+      .describe("The GraphQL node ID of the comment to update"),
     body: z.string().describe("The updated comment content"),
   },
   async ({ comment_id, body }) => {
@@ -161,7 +169,11 @@ server.tool(
         content: [
           {
             type: "text" as const,
-            text: JSON.stringify(result.data.updateDiscussionComment.comment, null, 2),
+            text: JSON.stringify(
+              result.data.updateDiscussionComment.comment,
+              null,
+              2,
+            ),
           },
         ],
       };
