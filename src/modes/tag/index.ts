@@ -122,12 +122,14 @@ async function prepareDiscussion({
     (tool) => tool.startsWith("mcp__github_"),
   );
 
-  // Discussion mode tools - focused on reading and replying
+  // Discussion mode tools - focused on reading, searching, and replying
   const discussionTools = [
     "Glob",
     "Grep",
     "LS",
     "Read",
+    "WebSearch",
+    "WebFetch",
     "mcp__github_discussion__reply_to_discussion",
     "mcp__github_discussion__update_discussion_comment",
     ...userAllowedMCPTools,
