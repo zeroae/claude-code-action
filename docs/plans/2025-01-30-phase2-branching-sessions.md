@@ -13,6 +13,7 @@
 ## Task 1: Add Discussion Data Fetcher
 
 **Files:**
+
 - Create: `src/github/data/discussion-fetcher.ts`
 - Create: `test/discussion-fetcher.test.ts`
 
@@ -268,6 +269,7 @@ git commit -m "feat: add discussion data fetcher with reply chain support"
 ## Task 2: Add Session Manager for Orphan Branch
 
 **Files:**
+
 - Create: `src/sessions/manager.ts`
 - Create: `test/sessions/manager.test.ts`
 
@@ -466,7 +468,9 @@ export class SessionManager {
   /**
    * Loads discussion summary.
    */
-  async loadSummary(discussionNumber: number): Promise<DiscussionSummary | null> {
+  async loadSummary(
+    discussionNumber: number,
+  ): Promise<DiscussionSummary | null> {
     const filePath = this.getSummaryFilePath(discussionNumber);
 
     if (!existsSync(filePath)) {
@@ -504,6 +508,7 @@ git commit -m "feat: add session manager for reading/writing session files"
 ## Task 3: Add Discussion Trigger Validation
 
 **Files:**
+
 - Modify: `src/github/validation/trigger.ts`
 - Create: `test/discussion-trigger.test.ts`
 
@@ -556,6 +561,7 @@ Expected: FAIL - function not exported
 **Step 3: Read and modify trigger.ts**
 
 First read the existing file:
+
 ```bash
 cat src/github/validation/trigger.ts
 ```
@@ -607,6 +613,7 @@ git commit -m "feat: add discussion trigger validation with category support"
 ## Task 4: Add Discussion Prompt Builder
 
 **Files:**
+
 - Create: `src/create-prompt/discussion-prompt.ts`
 - Create: `test/discussion-prompt.test.ts`
 
@@ -639,8 +646,16 @@ describe("Discussion Prompt Builder", () => {
     },
     replyChain: [
       { id: "DC_003", body: "What about JWT?", author: { login: "user1" } },
-      { id: "DC_002", body: "Here are 3 approaches...", author: { login: "claude[bot]" } },
-      { id: "DC_001", body: "I need help with auth", author: { login: "user1" } },
+      {
+        id: "DC_002",
+        body: "Here are 3 approaches...",
+        author: { login: "claude[bot]" },
+      },
+      {
+        id: "DC_001",
+        body: "I need help with auth",
+        author: { login: "user1" },
+      },
     ],
     sessionSummary: "Previously discussed OAuth and session-based auth.",
     repository: "owner/repo",
@@ -709,14 +724,11 @@ export type DiscussionPromptContext = {
 /**
  * Builds a prompt for Claude when triggered from a GitHub Discussion.
  */
-export function buildDiscussionPrompt(context: DiscussionPromptContext): string {
-  const {
-    discussion,
-    triggerComment,
-    replyChain,
-    sessionSummary,
-    repository,
-  } = context;
+export function buildDiscussionPrompt(
+  context: DiscussionPromptContext,
+): string {
+  const { discussion, triggerComment, replyChain, sessionSummary, repository } =
+    context;
 
   const conversationHistory = replyChain
     .slice()
@@ -788,6 +800,7 @@ git commit -m "feat: add discussion prompt builder"
 ## Task 5: Integrate Session Resume into Prepare Step
 
 **Files:**
+
 - Create: `src/prepare/discussion-prepare.ts`
 - Create: `test/discussion-prepare.test.ts`
 
@@ -955,6 +968,7 @@ Run: `git push origin main`
 ## Summary
 
 Phase 2 adds:
+
 1. Discussion data fetcher with reply chain walking
 2. Session manager for reading/writing session files
 3. Discussion trigger validation with category support

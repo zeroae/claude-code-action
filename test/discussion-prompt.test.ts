@@ -22,8 +22,16 @@ describe("Discussion Prompt Builder", () => {
     },
     replyChain: [
       { id: "DC_003", body: "What about JWT?", author: { login: "user1" } },
-      { id: "DC_002", body: "Here are 3 approaches...", author: { login: "claude[bot]" } },
-      { id: "DC_001", body: "I need help with auth", author: { login: "user1" } },
+      {
+        id: "DC_002",
+        body: "Here are 3 approaches...",
+        author: { login: "claude[bot]" },
+      },
+      {
+        id: "DC_001",
+        body: "I need help with auth",
+        author: { login: "user1" },
+      },
     ],
     sessionSummary: "Previously discussed OAuth and session-based auth.",
     repository: "owner/repo",

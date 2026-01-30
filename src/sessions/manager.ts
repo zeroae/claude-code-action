@@ -92,7 +92,9 @@ export class SessionManager {
     await writeFile(filePath, serializeSummary(summary));
   }
 
-  async loadSummary(discussionNumber: number): Promise<DiscussionSummary | null> {
+  async loadSummary(
+    discussionNumber: number,
+  ): Promise<DiscussionSummary | null> {
     const filePath = this.getSummaryFilePath(discussionNumber);
 
     if (!existsSync(filePath)) {

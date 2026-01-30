@@ -26,14 +26,11 @@ export type DiscussionPromptContext = {
 /**
  * Builds a prompt for Claude when triggered from a GitHub Discussion.
  */
-export function buildDiscussionPrompt(context: DiscussionPromptContext): string {
-  const {
-    discussion,
-    triggerComment,
-    replyChain,
-    sessionSummary,
-    repository,
-  } = context;
+export function buildDiscussionPrompt(
+  context: DiscussionPromptContext,
+): string {
+  const { discussion, triggerComment, replyChain, sessionSummary, repository } =
+    context;
 
   // Reply chain is newest-first, reverse for chronological order
   const conversationHistory = replyChain

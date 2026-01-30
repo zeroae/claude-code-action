@@ -2,9 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { mkdtemp, rm } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
-import {
-  SessionManager,
-} from "../../src/sessions/manager";
+import { SessionManager } from "../../src/sessions/manager";
 
 describe("Session Manager", () => {
   let tempDir: string;
