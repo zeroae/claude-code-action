@@ -190,6 +190,23 @@ export const tagMode: Mode = {
     if (!isEntityContext(context)) {
       return false;
     }
+
+    // For discussion events, check trigger phrase OR allow through if the
+    // workflow already validated category-based triggers
+    if (isDiscussionEvent(context) || isDiscussionCommentEvent(context)) {
+      // If trigger phrase found, definitely trigger
+      if (checkContainsTrigger(context)) {
+        return true;
+      }
+      // For new discussion events (not comments), allow through since the
+      // workflow may have triggered based on category configuration
+      if (isDiscussionEvent(context)) {
+        return true;
+      }
+      // For comments, require explicit trigger (mention or reply to Claude)
+      return false;
+    }
+
     return checkContainsTrigger(context);
   },
 
