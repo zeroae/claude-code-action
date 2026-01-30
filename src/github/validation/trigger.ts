@@ -141,6 +141,31 @@ export function escapeRegExp(string: string) {
   return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+/**
+ * Checks if a discussion event should trigger Claude.
+ * Returns true if:
+ * - The discussion category is in the configured categories list, OR
+ * - The comment body contains the trigger phrase
+ */
+export function checkDiscussionTrigger(
+  categoryName: string,
+  configuredCategories: string[],
+  triggerPhrase: string,
+  commentBody: string,
+): boolean {
+  // Check if in configured category
+  if (configuredCategories.includes(categoryName)) {
+    return true;
+  }
+
+  // Check for trigger phrase
+  if (commentBody.toLowerCase().includes(triggerPhrase.toLowerCase())) {
+    return true;
+  }
+
+  return false;
+}
+
 export async function checkTriggerAction(context: ParsedGitHubContext) {
   const containsTrigger = checkContainsTrigger(context);
   core.setOutput("contains_trigger", containsTrigger.toString());
