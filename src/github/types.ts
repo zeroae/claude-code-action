@@ -114,3 +114,49 @@ export type IssueQueryResponse = {
     issue: GitHubIssue;
   };
 };
+
+// Discussion types
+export type GitHubDiscussionComment = {
+  id: string;
+  databaseId: number;
+  body: string;
+  author: {
+    login: string;
+  };
+  createdAt: string;
+  updatedAt?: string;
+  isMinimized: boolean;
+  replyTo?: {
+    id: string;
+    databaseId: number;
+  };
+  replies?: {
+    nodes: GitHubDiscussionComment[];
+  };
+};
+
+export type GitHubDiscussion = {
+  id: string;
+  number: number;
+  title: string;
+  body: string;
+  author: {
+    login: string;
+  };
+  category: {
+    id: string;
+    name: string;
+    slug: string;
+  };
+  createdAt: string;
+  updatedAt?: string;
+  comments?: {
+    nodes: GitHubDiscussionComment[];
+  };
+};
+
+export type DiscussionQueryResponse = {
+  repository: {
+    discussion: GitHubDiscussion | null;
+  };
+};
