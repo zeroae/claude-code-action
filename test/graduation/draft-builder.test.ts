@@ -10,7 +10,8 @@ describe("Draft Builder", () => {
     discussionNumber: 42,
     discussionTitle: "How to implement auth?",
     discussionBody: "I need help with authentication",
-    conversationSummary: "Decided on JWT with RS256, 15min expiry, refresh tokens",
+    conversationSummary:
+      "Decided on JWT with RS256, 15min expiry, refresh tokens",
     repository: "owner/repo",
     defaultBranch: "main",
   };

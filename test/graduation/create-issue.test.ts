@@ -29,18 +29,14 @@ describe("Create Issue/PR", () => {
   });
 
   it("builds create PR params from draft", () => {
-    const params = buildCreatePRParams(
-      "owner",
-      "repo",
-      {
-        type: "pr",
-        title: "Add JWT",
-        body: "Implements JWT",
-        labels: [],
-        baseBranch: "main",
-        headBranch: "feature/jwt",
-      },
-    );
+    const params = buildCreatePRParams("owner", "repo", {
+      type: "pr",
+      title: "Add JWT",
+      body: "Implements JWT",
+      labels: [],
+      baseBranch: "main",
+      headBranch: "feature/jwt",
+    });
 
     expect(params.base).toBe("main");
     expect(params.head).toBe("feature/jwt");

@@ -19,7 +19,9 @@ describe("GitHub Graduation Server", () => {
     expect(CREATE_ISSUE_DRAFT_TOOL.input_schema.properties).toHaveProperty(
       "discussion_number",
     );
-    expect(CREATE_ISSUE_DRAFT_TOOL.input_schema.properties).toHaveProperty("title");
+    expect(CREATE_ISSUE_DRAFT_TOOL.input_schema.properties).toHaveProperty(
+      "title",
+    );
   });
 
   it("has create_pr_draft tool", () => {

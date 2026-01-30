@@ -87,7 +87,7 @@ export function parseDraftFromComment(commentBody: string): ParsedDraft | null {
   const labels =
     labelsStr === "(none)"
       ? []
-      : labelsStr.match(/`([^`]+)`/g)?.map((l) => l.replace(/`/g, "")) ?? [];
+      : (labelsStr.match(/`([^`]+)`/g)?.map((l) => l.replace(/`/g, "")) ?? []);
 
   // Parse body
   const bodyMatch = commentBody.match(
