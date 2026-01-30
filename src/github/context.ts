@@ -7,6 +7,8 @@ import type {
   PullRequestReviewEvent,
   PullRequestReviewCommentEvent,
   WorkflowRunEvent,
+  DiscussionEvent,
+  DiscussionCommentEvent,
 } from "@octokit/webhooks-types";
 import { CLAUDE_APP_BOT_ID, CLAUDE_BOT_LOGIN } from "./constants";
 // Custom types for GitHub Actions events that aren't webhooks
@@ -58,6 +60,8 @@ const ENTITY_EVENT_NAMES = [
   "pull_request",
   "pull_request_review",
   "pull_request_review_comment",
+  "discussion",
+  "discussion_comment",
 ] as const;
 
 const AUTOMATION_EVENT_NAMES = [
@@ -103,7 +107,7 @@ type BaseContext = {
   };
 };
 
-// Context for entity-based events (issues, PRs, comments)
+// Context for entity-based events (issues, PRs, comments, discussions)
 export type ParsedGitHubContext = BaseContext & {
   eventName: EntityEventName;
   payload:
@@ -111,9 +115,14 @@ export type ParsedGitHubContext = BaseContext & {
     | IssueCommentEvent
     | PullRequestEvent
     | PullRequestReviewEvent
-    | PullRequestReviewCommentEvent;
+    | PullRequestReviewCommentEvent
+    | DiscussionEvent
+    | DiscussionCommentEvent;
   entityNumber: number;
   isPR: boolean;
+  isDiscussion?: boolean;
+  discussionNodeId?: string;
+  discussionCategory?: string;
 };
 
 // Context for automation events (workflow_dispatch, repository_dispatch, schedule, workflow_run)
@@ -215,6 +224,32 @@ export function parseGitHubContext(): GitHubContext {
         isPR: true,
       };
     }
+    case "discussion": {
+      const payload = context.payload as DiscussionEvent;
+      return {
+        ...commonFields,
+        eventName: "discussion",
+        payload,
+        entityNumber: payload.discussion.number,
+        isPR: false,
+        isDiscussion: true,
+        discussionNodeId: payload.discussion.node_id,
+        discussionCategory: payload.discussion.category.name,
+      };
+    }
+    case "discussion_comment": {
+      const payload = context.payload as DiscussionCommentEvent;
+      return {
+        ...commonFields,
+        eventName: "discussion_comment",
+        payload,
+        entityNumber: payload.discussion.number,
+        isPR: false,
+        isDiscussion: true,
+        discussionNodeId: payload.discussion.node_id,
+        discussionCategory: payload.discussion.category.name,
+      };
+    }
     case "workflow_dispatch": {
       return {
         ...commonFields,
@@ -276,6 +311,18 @@ export function isPullRequestReviewCommentEvent(
   context: GitHubContext,
 ): context is ParsedGitHubContext & { payload: PullRequestReviewCommentEvent } {
   return context.eventName === "pull_request_review_comment";
+}
+
+export function isDiscussionEvent(
+  context: GitHubContext,
+): context is ParsedGitHubContext & { payload: DiscussionEvent } {
+  return context.eventName === "discussion";
+}
+
+export function isDiscussionCommentEvent(
+  context: GitHubContext,
+): context is ParsedGitHubContext & { payload: DiscussionCommentEvent } {
+  return context.eventName === "discussion_comment";
 }
 
 export function isIssuesAssignedEvent(
