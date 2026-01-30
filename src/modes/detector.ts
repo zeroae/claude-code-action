@@ -6,6 +6,8 @@ import {
   isPullRequestEvent,
   isIssuesEvent,
   isPullRequestReviewEvent,
+  isDiscussionEvent,
+  isDiscussionCommentEvent,
 } from "../github/context";
 import { checkContainsTrigger } from "../github/validation/trigger";
 
@@ -17,14 +19,16 @@ export function detectMode(context: GitHubContext): AutoDetectedMode {
     validateTrackProgressEvent(context);
   }
 
-  // If track_progress is set for PR/issue events, force tag mode
+  // If track_progress is set for PR/issue/discussion events, force tag mode
   if (context.inputs.trackProgress && isEntityContext(context)) {
     if (
       isPullRequestEvent(context) ||
       isIssuesEvent(context) ||
       isIssueCommentEvent(context) ||
       isPullRequestReviewCommentEvent(context) ||
-      isPullRequestReviewEvent(context)
+      isPullRequestReviewEvent(context) ||
+      isDiscussionEvent(context) ||
+      isDiscussionCommentEvent(context)
     ) {
       return "tag";
     }
@@ -76,6 +80,22 @@ export function detectMode(context: GitHubContext): AutoDetectedMode {
     }
   }
 
+  // Discussion events
+  if (isEntityContext(context) && (isDiscussionEvent(context) || isDiscussionCommentEvent(context))) {
+    // For discussions, use tag mode if in a Claude category or has trigger phrase
+    // Category checking will be done in the prepare step
+    if (context.inputs.prompt) {
+      return "agent";
+    }
+    if (checkContainsTrigger(context)) {
+      return "tag";
+    }
+    // For new discussions in Claude categories, default to tag mode
+    if (isDiscussionEvent(context)) {
+      return "tag";
+    }
+  }
+
   // Default to agent mode (which won't trigger without a prompt)
   return "agent";
 }
@@ -99,6 +119,8 @@ function validateTrackProgressEvent(context: GitHubContext): void {
     "issue_comment",
     "pull_request_review_comment",
     "pull_request_review",
+    "discussion",
+    "discussion_comment",
   ];
   if (!validEvents.includes(context.eventName)) {
     throw new Error(
