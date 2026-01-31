@@ -325,6 +325,161 @@ server.tool(
   },
 );
 
+server.tool(
+  "read_repo_file",
+  "Read a file from a GitHub repository. Use this to read code from accessible repos.",
+  {
+    owner: z.string().describe("Repository owner (e.g., 'zeroae')"),
+    repo: z.string().describe("Repository name (e.g., 'zae-svdb')"),
+    path: z.string().describe("File path within the repo (e.g., 'src/main.rs' or 'README.md')"),
+    ref: z.string().optional().describe("Git ref (branch, tag, or commit SHA). Defaults to default branch."),
+  },
+  async ({ owner, repo, path, ref }) => {
+    try {
+      const githubToken = process.env.GITHUB_TOKEN;
+
+      if (!githubToken) {
+        throw new Error("GITHUB_TOKEN environment variable is required");
+      }
+
+      let url = `${GITHUB_API_URL}/repos/${owner}/${repo}/contents/${path}`;
+      if (ref) {
+        url += `?ref=${encodeURIComponent(ref)}`;
+      }
+
+      const response = await fetch(url, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${githubToken}`,
+          Accept: "application/vnd.github+json",
+          "X-GitHub-Api-Version": "2022-11-28",
+        },
+      });
+
+      const result = (await response.json()) as any;
+
+      if (result.message) {
+        throw new Error(result.message);
+      }
+
+      // Handle file content (base64 encoded)
+      if (result.type === "file" && result.content) {
+        const content = Buffer.from(result.content, "base64").toString("utf-8");
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: content,
+            },
+          ],
+        };
+      }
+
+      // If it's a directory, return the listing
+      if (Array.isArray(result)) {
+        const listing = result.map((item: any) => `${item.type === "dir" ? "📁" : "📄"} ${item.name}`).join("\n");
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: `Directory listing for ${path}:\n${listing}`,
+            },
+          ],
+        };
+      }
+
+      throw new Error(`Unexpected response type: ${result.type}`);
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      console.error(`[read_repo_file] Error: ${errorMessage}`);
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: `Error: ${errorMessage}`,
+          },
+        ],
+        isError: true,
+      };
+    }
+  },
+);
+
+server.tool(
+  "search_repo_code",
+  "Search for code patterns in a GitHub repository using GitHub's code search.",
+  {
+    owner: z.string().describe("Repository owner (e.g., 'zeroae')"),
+    repo: z.string().describe("Repository name (e.g., 'zae-svdb')"),
+    query: z.string().describe("Search query (e.g., 'struct Vector' or 'fn memory')"),
+  },
+  async ({ owner, repo, query }) => {
+    try {
+      const githubToken = process.env.GITHUB_TOKEN;
+
+      if (!githubToken) {
+        throw new Error("GITHUB_TOKEN environment variable is required");
+      }
+
+      const searchQuery = `${query} repo:${owner}/${repo}`;
+      const url = `${GITHUB_API_URL}/search/code?q=${encodeURIComponent(searchQuery)}&per_page=10`;
+
+      const response = await fetch(url, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${githubToken}`,
+          Accept: "application/vnd.github+json",
+          "X-GitHub-Api-Version": "2022-11-28",
+        },
+      });
+
+      const result = (await response.json()) as any;
+
+      if (result.message) {
+        throw new Error(result.message);
+      }
+
+      if (!result.items || result.items.length === 0) {
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: `No results found for "${query}" in ${owner}/${repo}`,
+            },
+          ],
+        };
+      }
+
+      const matches = result.items.map((item: any) =>
+        `📄 ${item.path} (${item.html_url})`
+      ).join("\n");
+
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: `Found ${result.total_count} results for "${query}" in ${owner}/${repo}:\n\n${matches}`,
+          },
+        ],
+      };
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      console.error(`[search_repo_code] Error: ${errorMessage}`);
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: `Error: ${errorMessage}`,
+          },
+        ],
+        isError: true,
+      };
+    }
+  },
+);
+
 async function runServer() {
   const transport = new StdioServerTransport();
   await server.connect(transport);

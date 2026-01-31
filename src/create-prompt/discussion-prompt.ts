@@ -108,6 +108,10 @@ You have read access to these repositories. When the user asks about any of thes
 ${repoList}
 
 IMPORTANT: If a question mentions any of these repos (or related terms like "our implementation", "the codebase", project names), immediately explore that repo's code before answering. Don't ask the user to share code - you already have access.
+
+To read code from these repos, use:
+- mcp__github_discussion__read_repo_file: Read specific files (e.g., owner="zeroae", repo="zae-svdb", path="README.md")
+- mcp__github_discussion__search_repo_code: Search for code patterns (e.g., owner="zeroae", repo="zae-svdb", query="struct Vector")
 </accessible_repositories>
 `;
   }
