@@ -146,6 +146,7 @@ async function prepareDiscussion({
     "WebFetch",
     "mcp__github_discussion__reply_to_discussion",
     "mcp__github_discussion__update_discussion_comment",
+    "mcp__github_discussion__list_accessible_repositories",
     ...userAllowedMCPTools,
   ];
 

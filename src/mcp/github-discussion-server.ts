@@ -192,6 +192,74 @@ server.tool(
 );
 
 server.tool(
+  "list_accessible_repositories",
+  "List all repositories that this GitHub App installation has access to. Use this to discover what repos you can read, search, or reference.",
+  {},
+  async () => {
+    try {
+      const githubToken = process.env.GITHUB_TOKEN;
+
+      if (!githubToken) {
+        throw new Error("GITHUB_TOKEN environment variable is required");
+      }
+
+      // Use REST API to list installation repositories
+      const response = await fetch(`${GITHUB_API_URL}/installation/repositories`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${githubToken}`,
+          Accept: "application/vnd.github+json",
+          "X-GitHub-Api-Version": "2022-11-28",
+        },
+      });
+
+      const result = (await response.json()) as any;
+
+      if (result.message) {
+        throw new Error(result.message);
+      }
+
+      const repos = result.repositories?.map((repo: any) => ({
+        name: repo.full_name,
+        private: repo.private,
+        description: repo.description,
+        default_branch: repo.default_branch,
+        language: repo.language,
+      })) || [];
+
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: JSON.stringify(
+              {
+                total_count: result.total_count,
+                repositories: repos,
+              },
+              null,
+              2,
+            ),
+          },
+        ],
+      };
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      console.error(`[list_accessible_repositories] Error: ${errorMessage}`);
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: `Error: ${errorMessage}`,
+          },
+        ],
+        isError: true,
+      };
+    }
+  },
+);
+
+server.tool(
   "update_discussion_comment",
   "Update an existing discussion comment",
   {
