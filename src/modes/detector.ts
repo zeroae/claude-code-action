@@ -80,23 +80,18 @@ export function detectMode(context: GitHubContext): AutoDetectedMode {
     }
   }
 
-  // Discussion events
+  // Discussion events - always use tag mode (workflow handles trigger validation)
   if (
     isEntityContext(context) &&
     (isDiscussionEvent(context) || isDiscussionCommentEvent(context))
   ) {
-    // For discussions, use tag mode if in a Claude category or has trigger phrase
-    // Category checking will be done in the prepare step
+    // If custom prompt provided, use agent mode
     if (context.inputs.prompt) {
       return "agent";
     }
-    if (checkContainsTrigger(context)) {
-      return "tag";
-    }
-    // For new discussions in Claude categories, default to tag mode
-    if (isDiscussionEvent(context)) {
-      return "tag";
-    }
+    // Default to tag mode for discussions - the workflow's check step
+    // already validated the trigger (category, @mention, or reply to Claude)
+    return "tag";
   }
 
   // Default to agent mode (which won't trigger without a prompt)
