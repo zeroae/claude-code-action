@@ -16,6 +16,7 @@ type PrepareConfigParams = {
   mode: AutoDetectedMode;
   context: GitHubContext;
   discussionNodeId?: string;
+  triggerCommentId?: string;
 };
 
 async function checkActionsReadPermission(
@@ -244,6 +245,7 @@ export async function prepareMcpConfig(
           REPO_OWNER: owner,
           REPO_NAME: repo,
           DISCUSSION_NODE_ID: params.discussionNodeId,
+          TRIGGER_COMMENT_ID: params.triggerCommentId || "",
           GITHUB_API_URL: GITHUB_API_URL,
         },
       };

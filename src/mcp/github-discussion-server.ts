@@ -58,7 +58,7 @@ const UPDATE_DISCUSSION_COMMENT_MUTATION = `
 
 server.tool(
   "reply_to_discussion",
-  "Reply to a discussion or a specific comment in a discussion. Uses the current discussion by default.",
+  "Reply to the current discussion. Automatically threads under the triggering comment if applicable.",
   {
     body: z.string().describe("The reply content"),
     discussion_id: z
@@ -71,12 +71,14 @@ server.tool(
       .string()
       .optional()
       .describe(
-        "Optional: GraphQL node ID of comment to reply to (for threading)",
+        "GraphQL node ID of comment to reply to (defaults to triggering comment for threading)",
       ),
   },
   async ({ body, discussion_id, reply_to_id }) => {
-    // Use environment variable as default for discussion_id
+    // Use environment variables as defaults
     const targetDiscussionId = discussion_id || process.env.DISCUSSION_NODE_ID;
+    // Auto-thread under the triggering comment if available
+    const targetReplyToId = reply_to_id || process.env.TRIGGER_COMMENT_ID || null;
     try {
       const githubToken = process.env.GITHUB_TOKEN;
 
@@ -101,7 +103,7 @@ server.tool(
           variables: {
             discussionId: targetDiscussionId,
             body,
-            replyToId: reply_to_id || null,
+            replyToId: targetReplyToId,
           },
         }),
       });

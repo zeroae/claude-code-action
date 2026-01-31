@@ -164,6 +164,7 @@ async function prepareDiscussion({
     mode: "tag",
     context,
     discussionNodeId: parsedContext.discussionNodeId,
+    triggerCommentId,
   });
 
   // Build complete claude_args
