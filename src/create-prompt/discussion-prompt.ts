@@ -41,10 +41,17 @@ export function buildDiscussionPrompt(
     context;
 
   // Reply chain is newest-first, reverse for chronological order
+  // Include comment IDs for bot comments so Claude can update them if asked
   const conversationHistory = replyChain
     .slice()
     .reverse()
-    .map((c) => `**${c.author.login}:** ${c.body}`)
+    .map((c) => {
+      const isBotComment = c.author.login === context.botLogin;
+      const header = isBotComment
+        ? `**${c.author.login}** (comment_id: ${c.id}):`
+        : `**${c.author.login}:**`;
+      return `${header} ${c.body}`;
+    })
     .join("\n\n");
 
   let prompt = `You are Claude, responding to a GitHub Discussion.
@@ -83,9 +90,16 @@ Previous session summary: ${sessionSummary}
   prompt += `
 You are responding to the <current_request> above. This is a conversational GitHub Discussion - be helpful and engaging.
 
-Use the mcp__github_discussion__reply_to_discussion tool to post your response:
-- "body": Your response text (required)
-${isReplyToComment ? `- "reply_to_id": "${triggerComment.id}" (use this to reply in-thread to the comment you're responding to)` : "- No reply_to_id needed for new discussions"}
+Choose the right tool for responding:
+
+1. **reply_to_discussion** - Use for NEW responses (default):
+   - "body": Your response text (required)
+   ${isReplyToComment ? `- "reply_to_id": "${triggerComment.id}" (threads under the triggering comment)` : "- No reply_to_id needed for new discussions"}
+
+2. **update_discussion_comment** - Use when asked to EDIT/UPDATE a previous comment:
+   - Trigger words: "update", "edit", "revise", "modify", "change", "fix" your previous comment/response
+   - "comment_id": The node ID of YOUR comment to update (find it in the conversation thread)
+   - "body": The complete updated content (replaces the entire comment)
 
 Key points:
 - This is an exploratory discussion, not a task to execute
