@@ -187,11 +187,14 @@ async function prepareDiscussion({
     "Read",
     "WebSearch",
     "WebFetch",
+    // Discussion-specific tools
     "mcp__github_discussion__reply_to_discussion",
     "mcp__github_discussion__update_discussion_comment",
     "mcp__github_discussion__list_accessible_repositories",
-    "mcp__github_discussion__read_repo_file",
-    "mcp__github_discussion__search_repo_code",
+    // GitHub MCP server tools for reading code from accessible repos
+    "mcp__github__get_file_contents",
+    "mcp__github__search_code",
+    "mcp__github__list_commits",
     ...userAllowedMCPTools,
   ];
 

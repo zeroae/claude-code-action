@@ -209,7 +209,10 @@ export async function prepareMcpConfig(
       };
     }
 
-    if (hasGitHubMcpTools) {
+    // Include GitHub MCP server for:
+    // - Explicit mcp__github__ tools in allowed list
+    // - Discussion events (for reading code from accessible repos)
+    if (hasGitHubMcpTools || isDiscussionEvent) {
       baseMcpConfig.mcpServers.github = {
         command: "docker",
         args: [
