@@ -56,7 +56,7 @@ ${discussion.body}
 ${conversationHistory}
 </conversation_thread>
 
-<current_request>
+<current_request comment_id="${triggerComment.id}">
 ${triggerComment.body}
 </current_request>
 `;
@@ -69,10 +69,15 @@ Previous session summary: ${sessionSummary}
 `;
   }
 
+  // Check if trigger is from a comment (has a different ID than the discussion)
+  const isReplyToComment = triggerComment.id !== discussion.id;
+
   prompt += `
 You are responding to the <current_request> above. This is a conversational GitHub Discussion - be helpful and engaging.
 
-Use the mcp__github_discussion__reply_to_discussion tool to post your response. You only need to provide the "body" parameter - the discussion ID is already configured.
+Use the mcp__github_discussion__reply_to_discussion tool to post your response:
+- "body": Your response text (required)
+${isReplyToComment ? `- "reply_to_id": "${triggerComment.id}" (use this to reply in-thread to the comment you're responding to)` : "- No reply_to_id needed for new discussions"}
 
 Key points:
 - This is an exploratory discussion, not a task to execute
