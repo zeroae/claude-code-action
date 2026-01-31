@@ -29,8 +29,47 @@ import { buildDiscussionContext } from "../../github/data/discussion-fetcher";
 import {
   buildDiscussionPrompt,
   type DiscussionPromptContext,
+  type AccessibleRepository,
 } from "../../create-prompt/discussion-prompt";
+import { GITHUB_API_URL } from "../../github/api/config";
 import type { DiscussionCommentEvent } from "@octokit/webhooks-types";
+
+/**
+ * Fetches repositories accessible to the current GitHub App installation.
+ */
+async function fetchAccessibleRepos(
+  githubToken: string,
+): Promise<AccessibleRepository[]> {
+  try {
+    const response = await fetch(`${GITHUB_API_URL}/installation/repositories`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${githubToken}`,
+        Accept: "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+      },
+    });
+
+    const result = (await response.json()) as any;
+
+    if (result.message) {
+      console.error(`Failed to fetch accessible repos: ${result.message}`);
+      return [];
+    }
+
+    return (
+      result.repositories?.map((repo: any) => ({
+        name: repo.full_name,
+        description: repo.description,
+        language: repo.language,
+        private: repo.private,
+      })) || []
+    );
+  } catch (error) {
+    console.error(`Error fetching accessible repos: ${error}`);
+    return [];
+  }
+}
 
 /**
  * Handles preparation for discussion events.
@@ -70,6 +109,9 @@ async function prepareDiscussion({
   if (!discussionContext) {
     throw new Error("Failed to fetch discussion data");
   }
+
+  // Fetch accessible repos for the prompt
+  const accessibleRepos = await fetchAccessibleRepos(githubToken);
 
   // Build discussion prompt context
   const { discussion, replyChain } = discussionContext;
@@ -119,6 +161,7 @@ async function prepareDiscussion({
     })),
     repository: `${context.repository.owner}/${context.repository.repo}`,
     botLogin: context.inputs.botName,
+    accessibleRepos,
   };
 
   // Generate discussion-specific prompt

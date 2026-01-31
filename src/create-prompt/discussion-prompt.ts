@@ -1,3 +1,10 @@
+export type AccessibleRepository = {
+  name: string;
+  description: string | null;
+  language: string | null;
+  private: boolean;
+};
+
 export type DiscussionPromptContext = {
   discussion: {
     id: string;
@@ -21,6 +28,7 @@ export type DiscussionPromptContext = {
   sessionSummary?: string;
   repository: string;
   botLogin: string;
+  accessibleRepos?: AccessibleRepository[];
 };
 
 /**
@@ -85,13 +93,24 @@ Key points:
 - Use WebSearch if you need to research external topics
 - Reference specific code or docs when helpful
 - Keep responses focused and actionable
-
-IMPORTANT - Cross-repo access:
-You have access to multiple repositories beyond ${repository}. When the user mentions a project name, repo name, or codebase (like "zae-svdb", "our implementation", etc.):
-1. FIRST call mcp__github_discussion__list_accessible_repositories to see what repos you can access
-2. If the mentioned project matches an accessible repo, use Glob/Grep/Read to explore that repo's code
-3. Base your answers on the ACTUAL code, not assumptions
 `;
+
+  // Add accessible repos section if available
+  if (context.accessibleRepos && context.accessibleRepos.length > 0) {
+    const repoList = context.accessibleRepos
+      .map((r) => `- **${r.name}**${r.description ? `: ${r.description}` : ""}${r.language ? ` (${r.language})` : ""}`)
+      .join("\n");
+
+    prompt += `
+<accessible_repositories>
+You have read access to these repositories. When the user asks about any of these projects, PROACTIVELY read the code using Glob/Grep/Read tools to provide accurate answers based on the actual implementation:
+
+${repoList}
+
+IMPORTANT: If a question mentions any of these repos (or related terms like "our implementation", "the codebase", project names), immediately explore that repo's code before answering. Don't ask the user to share code - you already have access.
+</accessible_repositories>
+`;
+  }
 
   return prompt;
 }
