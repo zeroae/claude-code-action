@@ -96,9 +96,14 @@ export async function prepareMcpConfig(
     };
 
     // Include comment server:
-    // - Always in tag mode (for updating Claude comments)
+    // - In tag mode for PRs/issues (for updating Claude comments)
+    // - NOT for discussions (they have their own server)
     // - Only with explicit tools in agent mode
-    const shouldIncludeCommentServer = !isAgentMode || hasGitHubCommentTools;
+    const isDiscussionEvent =
+      isEntityContext(context) &&
+      (context as ParsedGitHubContext).isDiscussion === true;
+    const shouldIncludeCommentServer =
+      (!isAgentMode && !isDiscussionEvent) || hasGitHubCommentTools;
 
     if (shouldIncludeCommentServer) {
       baseMcpConfig.mcpServers.github_comment = {
@@ -227,9 +232,6 @@ export async function prepareMcpConfig(
     // Include discussion server for discussion events
     // - Always in tag mode for discussions (for posting replies)
     // - Only with explicit tools in agent mode
-    const isDiscussionEvent =
-      isEntityContext(context) &&
-      (context as ParsedGitHubContext).isDiscussion === true;
     const shouldIncludeDiscussionServer =
       isDiscussionEvent && (!isAgentMode || hasDiscussionTools);
 
