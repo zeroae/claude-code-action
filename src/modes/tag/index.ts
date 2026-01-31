@@ -93,11 +93,25 @@ async function prepareDiscussion({
           body: triggerComment.body,
           author: triggerComment.author,
         }
-      : {
-          id: discussion.id,
-          body: discussion.body || "",
-          author: discussion.author,
-        },
+      : triggerCommentId
+        ? {
+            // Comment exists but wasn't in reply chain (just created)
+            // Use the comment ID from payload for threading
+            id: triggerCommentId,
+            body:
+              (context.payload as DiscussionCommentEvent).comment?.body || "",
+            author: {
+              login:
+                (context.payload as DiscussionCommentEvent).comment?.user
+                  ?.login || "unknown",
+            },
+          }
+        : {
+            // New discussion (no comment trigger)
+            id: discussion.id,
+            body: discussion.body || "",
+            author: discussion.author,
+          },
     replyChain: replyChain.map((c) => ({
       id: c.id,
       body: c.body,
