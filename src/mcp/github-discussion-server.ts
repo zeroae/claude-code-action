@@ -56,6 +56,20 @@ const UPDATE_DISCUSSION_COMMENT_MUTATION = `
   }
 `;
 
+// Query to get the parent comment ID for proper threading
+const GET_COMMENT_PARENT_QUERY = `
+  query($commentId: ID!) {
+    node(id: $commentId) {
+      ... on DiscussionComment {
+        id
+        replyTo {
+          id
+        }
+      }
+    }
+  }
+`;
+
 server.tool(
   "reply_to_discussion",
   "Reply to the current discussion. Automatically threads under the triggering comment if applicable.",
@@ -78,7 +92,7 @@ server.tool(
     // Use environment variables as defaults
     const targetDiscussionId = discussion_id || process.env.DISCUSSION_NODE_ID;
     // Auto-thread under the triggering comment if available
-    const targetReplyToId = reply_to_id || process.env.TRIGGER_COMMENT_ID || null;
+    let targetReplyToId = reply_to_id || process.env.TRIGGER_COMMENT_ID || null;
     try {
       const githubToken = process.env.GITHUB_TOKEN;
 
@@ -91,6 +105,39 @@ server.tool(
           "discussion_id is required (either as parameter or DISCUSSION_NODE_ID env var)",
         );
       }
+
+      // Log for debugging
+      console.error(`[reply_to_discussion] Starting with discussionId=${targetDiscussionId}, replyToId=${targetReplyToId}`);
+
+      // GitHub Discussions only support one level of nesting.
+      // If targetReplyToId is a nested comment (already has a parent), we need to
+      // use the parent's ID instead to stay in the same thread.
+      if (targetReplyToId) {
+        console.error(`[reply_to_discussion] Checking if comment ${targetReplyToId} is a nested reply...`);
+        const parentCheckResponse = await fetch(`${GITHUB_API_URL}/graphql`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${githubToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            query: GET_COMMENT_PARENT_QUERY,
+            variables: { commentId: targetReplyToId },
+          }),
+        });
+
+        const parentCheckResult = (await parentCheckResponse.json()) as any;
+        console.error(`[reply_to_discussion] Parent check result: ${JSON.stringify(parentCheckResult)}`);
+
+        if (parentCheckResult.data?.node?.replyTo?.id) {
+          // The target comment is a nested reply - use its parent instead
+          const parentId = parentCheckResult.data.node.replyTo.id;
+          console.error(`[reply_to_discussion] Comment is nested, using parent ${parentId} for threading`);
+          targetReplyToId = parentId;
+        }
+      }
+
+      console.error(`[reply_to_discussion] Posting comment with final replyToId=${targetReplyToId}`);
 
       const response = await fetch(`${GITHUB_API_URL}/graphql`, {
         method: "POST",
@@ -109,6 +156,7 @@ server.tool(
       });
 
       const result = (await response.json()) as any;
+      console.error(`[reply_to_discussion] Mutation result: ${JSON.stringify(result)}`);
 
       if (result.errors) {
         throw new Error(result.errors[0].message);
@@ -129,6 +177,7 @@ server.tool(
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
+      console.error(`[reply_to_discussion] Error: ${errorMessage}`);
       return {
         content: [
           {
