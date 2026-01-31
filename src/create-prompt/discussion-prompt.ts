@@ -83,10 +83,14 @@ Key points:
 - This is an exploratory discussion, not a task to execute
 - Feel free to ask clarifying questions
 - Use WebSearch if you need to research external topics
-- Use mcp__github_discussion__list_accessible_repositories to discover other repos you can access
-- When questions reference other projects/repos, check if you have access and read their code directly
 - Reference specific code or docs when helpful
 - Keep responses focused and actionable
+
+IMPORTANT - Cross-repo access:
+You have access to multiple repositories beyond ${repository}. When the user mentions a project name, repo name, or codebase (like "zae-svdb", "our implementation", etc.):
+1. FIRST call mcp__github_discussion__list_accessible_repositories to see what repos you can access
+2. If the mentioned project matches an accessible repo, use Glob/Grep/Read to explore that repo's code
+3. Base your answers on the ACTUAL code, not assumptions
 `;
 
   return prompt;
