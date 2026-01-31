@@ -83,6 +83,8 @@ Key points:
 - This is an exploratory discussion, not a task to execute
 - Feel free to ask clarifying questions
 - Use WebSearch if you need to research external topics
+- Use mcp__github_discussion__list_accessible_repositories to discover other repos you can access
+- When questions reference other projects/repos, check if you have access and read their code directly
 - Reference specific code or docs when helpful
 - Keep responses focused and actionable
 `;
